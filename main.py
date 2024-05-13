@@ -33,9 +33,8 @@ class Task:
         name: str,
         description: str,
         due_date: datetime | None = None,
-        task_id=None | str,
+        task_id: str = None
     ):
-        print()
         self.task_id = task_id or create_id()
         self.name = name
         self.description = description
@@ -48,14 +47,19 @@ class Task:
             "name": self.name,
             "description": self.description,
             "completed": self.completed,
-            "due_date": self.due_date,
+            "due_date": self.due_date.isoformat() if self.due_date else None,
         }
 
     @staticmethod
     def fromdict(dict):
-        task =  Task.__init__(
-            dict["name"], dict["description"], dict["completed"], task_id=dict["id"]
+        due_date = datetime.fromisoformat(dict["due_date"]) if dict["due_date"] else None
+        task = Task(
+            dict["name"], 
+            dict["description"], 
+            due_date, 
+            task_id=dict["id"]
         )
+        task.completed = dict["completed"]
         return task
 
 
@@ -85,7 +89,7 @@ class Storage:
     def add_task(self, task) -> str:
         self.tasks.append(task)
         self.sync()
-        return task.id
+        return task.task_id
 
     def sync(self):
         self.delete_over_due()
