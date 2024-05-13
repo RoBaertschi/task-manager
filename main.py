@@ -76,13 +76,12 @@ class Storage:
 
     def load_tasks(self):
         try:
-            fd = open(self.path, "r+")
-            db = json.load(fd)
-            for task in db:
-                self.tasks.append(Task.fromdict(task))
-            fd.close()
+            with open(self.path, "r+") as fd:
+                db = json.load(fd)
+                for task in db:
+                    self.tasks.append(Task.fromdict(task))
         except Exception as err:
-            raise RuntimeError(f"Threw: {err}")
+            raise RuntimeError(f"Error occurred while loading tasks: {err}")
 
     def add_task(self, task) -> str:
         self.tasks.append(task)
@@ -96,7 +95,7 @@ class Storage:
                 tasks = [task.todict() for task in self.tasks]
                 json.dump(tasks, fd)
         except Exception as e:
-            raise RuntimeError(f"OS threw: {e}")
+            raise RuntimeError(f"Error occurred while syncing tasks: {e}")
 
     def remove_task(self, task_id):
         self.tasks = [task for task in self.tasks if task.task_id != task_id]
@@ -116,12 +115,9 @@ class Storage:
         raise RuntimeError(f"Task with id {task_id} was not found")
 
     def complete(self, task_id):
-        # Getting the task
         task = self.find_task(task_id)
 
-        # Checking if the task is not empty
         if task:
-            # Setting the complete to true a
             task.completed = True
             self.sync()
         else:
@@ -176,7 +172,11 @@ def list(all: Annotated[bool, typer.Option()] = False):
     # procentage of all completed tasks
     completed = len([task for task in storage.tasks if task.completed])
     total = len(storage.tasks)
-    proc = (completed / total) * 100
+    proc = 0
+    if total == 0:
+        proc = 0.0
+    else:
+        proc = (completed / total) * 100
 
     table = Table(title=f"Task List - [green]({proc:.2f}%)[/green] Completed")
 
