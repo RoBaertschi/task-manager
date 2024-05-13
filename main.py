@@ -5,17 +5,20 @@ import typer
 import json
 import uuid
 import string
-import os 
+import os
+
 # List of taken UID's for taskso
 uids = set()
+
 
 # Function to create a UID for a task
 def create_id() -> str:
     while True:
-        uid = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
+        uid = "".join(random.choices(string.ascii_letters + string.digits, k=6))
         if uid not in uids:
             uids.add(uid)
             return uid
+
 
 # Task()
 class Task:
@@ -25,43 +28,60 @@ class Task:
     completed: bool
     due_date: datetime | None
 
-    def __init__(self, name: str, description: str, due_date: datetime | None=None, task_id=None|str):
+    def __init__(
+        self,
+        name: str,
+        description: str,
+        due_date: datetime | None = None,
+        task_id=None | str,
+    ):
         print()
-        self.task_id = None
-        if id is None:
-            self.task_id = create_id()
-        else:
-            print(type(task_id))
-            self.task_id = task_id
+        self.task_id = task_id or create_id()
         self.name = name
         self.description = description
         self.completed = False
         self.due_date = due_date
 
-
     def todict(self):
-        return {"id": self.task_id, "name": self.name, "description": self.description, "completed": self.completed,"due_date": self.due_date}
+        return {
+            "id": self.task_id,
+            "name": self.name,
+            "description": self.description,
+            "completed": self.completed,
+            "due_date": self.due_date,
+        }
 
     @staticmethod
     def fromdict(dict):
-        return Task.__init__( dict["name"], dict["description"], dict["completed"], task_id=dict["id"])
+        task =  Task.__init__(
+            dict["name"], dict["description"], dict["completed"], task_id=dict["id"]
+        )
+        return task
+
 
 class Storage:
     tasks: list[Task]
     path: str
-    
+
     def __init__(self, path: str):
         self.tasks = []
         self.path = path
         if not os.path.exists(self.path):
-            with open(self.path, 'w') as f:
+            with open(self.path, "w") as f:
                 json.dump([], f)
-        self.db = json.load(open(self.path, "r+"))
         self.load_tasks()
 
     def load_tasks(self):
-        self.tasks = [Task.fromdict(d) for d in self.db]
-        
+        try:
+            fd = open(self.path, "r+")
+            db = json.load(fd)
+            print(db[0])
+            for task in db:
+                self.tasks.append(Task.fromdict(task))
+            fd.close()
+        except Exception as err:
+            raise RuntimeError(f"Threw: {err}")
+
     def add_task(self, task) -> str:
         self.tasks.append(task)
         self.sync()
@@ -70,18 +90,15 @@ class Storage:
     def sync(self):
         self.delete_over_due()
         try:
-            self.db = [task.todict() for task in self.tasks]
-            json.dump(self.db, open(self.path, "w+"))
-        except Exception:
-            raise RuntimeError(f"OS threw: {Exception}")
+            with open(self.path, "w") as fd:
+                tasks = [task.todict() for task in self.tasks]
+                json.dump(tasks, fd)
+        except Exception as e:
+            raise RuntimeError(f"OS threw: {e}")
 
     def remove_task(self, task_id):
         self.tasks = [task for task in self.tasks if task.task_id != task_id]
         self.sync()
-
-    def close(self):
-        self.sync()
-        self.db.close()
 
     def find_task(self, task_id) -> Task | None:
         for task in self.tasks:
@@ -95,15 +112,14 @@ class Storage:
                 self.tasks[i] = task_
                 return
         raise RuntimeError(f"Task with id {task_id} was not found")
-            
-    
+
     def complete(self, task_id):
-        #Getting the task
+        # Getting the task
         task = self.find_task(task_id)
-        
-        #Checking if the task is not empty
+
+        # Checking if the task is not empty
         if task:
-            #Setting the complete to true a
+            # Setting the complete to true a
             task.completed = True
             self.sync()
         else:
@@ -111,26 +127,31 @@ class Storage:
 
     def add_due_date(self, task_id, due_date):
         task = self.find_task(task_id)
-        
+
         if task:
             task.due_date = due_date
-            self.sync() 
+            self.sync()
         else:
             raise RuntimeError(f"Task with id {task_id} was not found")
 
     def delete_over_due(self):
         due_date_threshold = datetime.now().date() - timedelta(days=1)
-        self.tasks = [task for task in self.tasks if not task.due_date or task.due_date >= due_date_threshold]
-
+        self.tasks = [
+            task
+            for task in self.tasks
+            if not task.due_date or task.due_date >= due_date_threshold
+        ]
 
 
 from rich import print, panel  # noqa: E402
- 
+
 storage = Storage("tasks.json")
 storage.add_task(Task("Hello", "Hello"))
 storage.sync()
 
 app = typer.Typer()
+
+
 @app.command()
 def list(all: Annotated[bool, typer.Option()] = False):
     """
@@ -143,11 +164,19 @@ def list(all: Annotated[bool, typer.Option()] = False):
             completed = "Yes"
         else:
             completed = "No"
-        
+
         date = task.due_date
         if date is None:
             date = "None"
-        print(panel.Panel("[green]" + task.name + "[/]", task.description, "[bold]completed: " + completed + "[/]", "Due Date: " + task.due_date))
+        print(
+            panel.Panel(
+                "[green]" + task.name + "[/]",
+                task.description,
+                "[bold]completed: " + completed + "[/]",
+                "Due Date: " + task.due_date,
+            )
+        )
+
 
 @app.command()
 def add():
@@ -156,12 +185,14 @@ def add():
     """
     pass
 
+
 @app.command()
 def complete(task: str):
     """
     Completes a task.
     """
     pass
+
 
 @app.command()
 def uncomplete(task: str):
@@ -170,12 +201,14 @@ def uncomplete(task: str):
     """
     pass
 
+
 @app.command()
 def get(task: str):
     """
     Get description, name, author and completion status of a task.
     """
     pass
+
 
 if __name__ == "__main__":
     app()
