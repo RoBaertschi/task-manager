@@ -79,7 +79,6 @@ class Storage:
         try:
             fd = open(self.path, "r+")
             db = json.load(fd)
-            print(db[0])
             for task in db:
                 self.tasks.append(Task.fromdict(task))
             fd.close()
