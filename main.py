@@ -22,7 +22,7 @@ def create_id() -> str:
             return uid
 
 
-# Task()
+# This class defines a general Task. It contains an id, that is unique to each task.
 class Task:
     task_id: str
     name: str
@@ -30,6 +30,7 @@ class Task:
     completed: bool
     due_date: datetime | None
 
+    # If task_id is None, we generate a new, unique id
     def __init__(
         self,
         name: str,
@@ -62,6 +63,7 @@ class Task:
         return task
 
 
+# The Storage class, reads and writes all the task from a file provided by the constructor.
 class Storage:
     tasks: list[Task]
     path: str
@@ -88,6 +90,7 @@ class Storage:
         self.sync()
         return task.task_id
 
+    # Removes all over due tasks and stores the tasks in a file
     def sync(self):
         self.delete_over_due()
         try:
@@ -107,12 +110,6 @@ class Storage:
                 return task
         return None
 
-    def replace(self, task_id, task_) -> None:
-        for i, task in enumerate(self.tasks):
-            if task.task_id == task_id:
-                self.tasks[i] = task_
-                return
-        raise RuntimeError(f"Task with id {task_id} was not found")
 
     def complete(self, task_id):
         task = self.find_task(task_id)
@@ -141,6 +138,7 @@ class Storage:
         else:
             raise RuntimeError(f"Task with id {task_id} was not found")
 
+    # Removes all dates from the array, that are overdue
     def delete_over_due(self):
         due_date_threshold = datetime.combine(
             datetime.now().date() - timedelta(days=1), datetime.min.time()
