@@ -1,7 +1,7 @@
 from typing import Annotated
 from datetime import datetime, timedelta
 import random
-from rich import print, panel  # noqa: E402
+from rich import print
 from rich.table import Table
 from rich.console import Console
 import typer
