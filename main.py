@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from typing import Annotated
 from datetime import datetime, timedelta
 import random
@@ -81,7 +82,13 @@ class Storage:
                 for task in db:
                     self.tasks.append(Task.fromdict(task))
         except Exception as err:
-            raise RuntimeError(f"Error occurred while loading tasks: {err}")
+            match err.__class__.__name__:
+                case "FileNotFoundError":
+                    print("[red]Error: The tasks file does not exist.[/red]")
+                case "JSONDecodeError":
+                    print("[red]Error: The tasks file is not properly formatted.[/red]")
+                case _:
+                    print(f"[red]Unexpected error occurred: {err}[/red]")
 
     def add_task(self, task) -> str:
         self.tasks.append(task)
