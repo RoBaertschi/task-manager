@@ -25,11 +25,16 @@ def create_id() -> str:
 
 # Task()
 class Task:
-    task_id: str
-    name: str
-    description: str
-    completed: bool
-    due_date: datetime | None
+    """
+    Represents a task in the task manager.
+
+    Attributes:
+        task_id (str): The unique identifier for the task.
+        name (str): The name of the task.
+        description (str): The description of the task.
+        completed (bool): Indicates whether the task is completed or not.
+        due_date (datetime | None): The due date of the task, or None if no due date is set.
+    """
 
     def __init__(
         self,
@@ -38,6 +43,15 @@ class Task:
         due_date: datetime | None = None,
         task_id: str = None,
     ):
+        """
+        Initializes a new instance of the Task class.
+
+        Args:
+            name (str): The name of the task.
+            description (str): The description of the task.
+            due_date (datetime | None, optional): The due date of the task. Defaults to None.
+            task_id (str, optional): The unique identifier for the task. Defaults to None.
+        """
         self.task_id = task_id or create_id()
         self.name = name
         self.description = description
@@ -45,6 +59,12 @@ class Task:
         self.due_date = due_date
 
     def todict(self):
+        """
+        Converts the task object to a dictionary.
+
+        Returns:
+            dict: A dictionary representation of the task object.
+        """
         return {
             "id": self.task_id,
             "name": self.name,
@@ -55,6 +75,15 @@ class Task:
 
     @staticmethod
     def fromdict(dict):
+        """
+        Creates a task object from a dictionary.
+
+        Args:
+            dict (dict): A dictionary containing the task data.
+
+        Returns:
+            Task: A task object created from the dictionary.
+        """
         due_date = (
             datetime.fromisoformat(dict["due_date"]) if dict["due_date"] else None
         )
@@ -64,6 +93,27 @@ class Task:
 
 
 class Storage:
+    """
+    A class that represents a storage for tasks.
+
+    Attributes:
+        tasks (list[Task]): A list of Task objects.
+        path (str): The path to the tasks file.
+
+    Methods:
+        __init__(self, path: str): Initializes a new instance of the Storage class.
+        load_tasks(self): Loads tasks from the tasks file.
+        add_task(self, task) -> str: Adds a new task to the storage.
+        sync(self): Syncs the tasks with the tasks file.
+        remove_task(self, task_id): Removes a task from the storage.
+        find_task(self, task_id) -> Task | None: Finds a task by its ID.
+        replace(self, task_id, task_) -> None: Replaces a task with a new task.
+        complete(self, task_id): Marks a task as completed.
+        uncomplete(self, task_id): Marks a task as uncompleted.
+        add_due_date(self, task_id, due_date): Adds a due date to a task.
+        delete_over_due(self): Deletes tasks that are overdue.
+    """
+
     tasks: list[Task]
     path: str
 
